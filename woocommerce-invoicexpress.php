@@ -31,7 +31,9 @@ if (is_woocommerce_active()) {
 	
 			add_action('admin_init',array(&$this,'settings_init'));
 			add_action('admin_menu',array(&$this,'menu'));
-			add_action('woocommerce_checkout_order_processed',array(&$this,'process')); // Check if user is InvoiceXpress client (create if not) and create invoice.
+			//add_action('woocommerce_checkout_order_processed',array(&$this,'process')); // Check if user is InvoiceXpress client (create if not) and create invoice.
+			
+			add_action('woocommerce_order_status_processing',array(&$this,'process'));
 			add_action('woocommerce_payment_complete',array(&$this,'payment')); // Check if user is InvoiceXpress client (create if not) and create invoice.
 	
 		}
@@ -175,11 +177,14 @@ if (is_woocommerce_active()) {
 								//'organization'	=> $order->billing_company,
 								'email'			=> $order->billing_email,
 								'phone'			=> $order->billing_phone,
-								'address'		=> $order->billing_address_1,
+								'address'		=> $order->billing_address_1."\n".
+												   $order->billing_address_2."\n",								
 								//'p_street2'		=> $order->billing_address_2,
 								//'p_city'		=> $order->billing_city,
 								//'p_state'		=> $order->billing_state,
-								'postal_code'	=> $order->billing_postcode,
+								'postal_code'	=> $order->billing_postcode . " - " . $order->billing_city,
+								'country'		=> 'Portugal',
+								'send_options'	=> 1
 						),
 				);
 				error_log("clients.create");
@@ -213,18 +218,32 @@ if (is_woocommerce_active()) {
 			if(intval($client_id) > 0) {
 				if(get_option('wc_ie_create_invoice')==1) {
 					foreach($order->get_items() as $item) {
+						$debug = print_r($item, true);
+						error_log("Carrinho = ".$debug);
+						
 						$items[] = array(
 								'name'			=> $item['name'],
 								'description'	=> '('.$item['qty'].') '.$item['name'],
 								'unit_price'		=> $item['line_total'],
 								'quantity'		=> 1,
+								'unit'			=> 'unit',
+								'tax'			=> array(
+										'name'	=> 'IVA23'
+								)
 						);
-					}
-/*					$items[] = array(
-							'description'	=> 'Shipping',
-							'unit_cost'		=> $order->get_shipping(),
-							'quantity'		=> 1,
-					);*/
+						$items[] = array(
+								'name'			=> 'Manuseamento e Transporte',
+								'description'	=> 'Manuseamento e Transporte',
+								'unit_price'	=> $order->get_shipping(),
+								'quantity'		=> 1,
+								'unit'			=> 'unit',
+								'tax'			=> array(
+										'name'	=> 'IVA23'
+								)
+						);
+					}	
+					
+					
 					/*
 					$items[] = array(
 							'description'	=> 'Taxes',
@@ -232,7 +251,7 @@ if (is_woocommerce_active()) {
 							'quantity'		=> 1,
 					);*/
 					$data = array(
-							'invoice' => array(
+							'simplified_invoice' => array(
 									'date'	=> $order->completed_date,
 									'client' => array( 'name' => $client_name, 'code' => $client_id ),
 									'items'		=> array(
@@ -244,7 +263,7 @@ if (is_woocommerce_active()) {
 					// @TODO: invoice number prefix
 					//if(get_option('wc_ie_inv_num_prefix') != '') $data['invoice']['number'] = get_option('wc_ie_inv_num_prefix').$order_id;
 
-					$invoice = new InvoiceXpressRequest('invoices.create');
+					$invoice = new InvoiceXpressRequest('simplified_invoices.create');
 		
 					$invoice->post($data);
 					$invoice->request();
@@ -255,7 +274,7 @@ if (is_woocommerce_active()) {
 						add_post_meta($order_id, 'wc_ie_inv_num', $invoice_id, true);
 						
 						// extra request to change status to final
-						$invoice = new InvoiceXpressRequest('invoices.change-state');
+						$invoice = new InvoiceXpressRequest('simplified_invoices.change-state');
 						$data = array('invoice' => array('state'	=> 'finalized'));
 						$invoice->post($data);
 						$invoice->request($invoice_id);
@@ -264,19 +283,20 @@ if (is_woocommerce_active()) {
 						$order->add_order_note(__('InvoiceXpress Invoice API Error:','wc_invoicexpress').': '.$invoice->getError());
 					}
 				}
+				
 				if(get_option('wc_ie_send_invoice')==1 && isset($invoice_id)) {
 					$data = array(
 							'message' => array(
 									'client' => array(
-											'email' => "nuno.morgadinho@gmail.com",
+											'email' => $order->billing_email,
 											'save' => 1
 											),
-									'subject' => 'invoice from your purchase',
-									'body' => 'this is where the email body goes'									
+									'subject' => 'PopyBox Factura de Pagamento',
+									'body' => 'Por favor encontre a sua factura em anexo. Pode guardar este documento como prova do seu pagamento. Obrigado.'									
 									)
 							);
 		
-					$send_invoice = new InvoiceXpressRequest('invoices.email-invoice');
+					$send_invoice = new InvoiceXpressRequest('simplified_invoices.email-invoice');
 					$send_invoice->post($data);
 					$send_invoice->request($invoice_id);
 					
@@ -287,6 +307,7 @@ if (is_woocommerce_active()) {
 						$order->add_order_note(__('InvoiceXpress Send Invoice API Error','wc_invoicexpress').': '.$send_invoice->getError());
 					}
 				}
+				
 			}
 		}
 		
