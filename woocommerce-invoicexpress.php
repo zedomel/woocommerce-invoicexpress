@@ -159,8 +159,6 @@ if (is_woocommerce_active()) {
 		<?php }
 		
 		function process($order_id) {
-		
-			error_log("estou aqui process");
 			
 			InvoiceXpressRequest::init($this->subdomain, $this->token);
 		
@@ -174,20 +172,16 @@ if (is_woocommerce_active()) {
 				$data = array(
 						'client' => array(
 								'name'			=> $client_name,
-								//'organization'	=> $order->billing_company,
 								'email'			=> $order->billing_email,
 								'phone'			=> $order->billing_phone,
 								'address'		=> $order->billing_address_1."\n".
 												   $order->billing_address_2."\n",								
-								//'p_street2'		=> $order->billing_address_2,
-								//'p_city'		=> $order->billing_city,
-								//'p_state'		=> $order->billing_state,
 								'postal_code'	=> $order->billing_postcode . " - " . $order->billing_city,
 								'country'		=> 'Portugal',
 								'send_options'	=> 1
 						),
 				);
-				error_log("clients.create");
+				//error_log("clients.create");
 
 				$client = new InvoiceXpressRequest('clients.create');
 				$client->post($data);
@@ -201,7 +195,7 @@ if (is_woocommerce_active()) {
 					$order->add_order_note(__('InvoiceXpress Client (Create) API Error','wc_invoicexpress').': '.$client->getError());
 				}
 			} else {
-				error_log("clients.get");
+				//error_log("clients.get");
 				$client = new InvoiceXpressRequest('clients.get');
 				$client->post($data);
 				$client->request($client_id);
@@ -219,7 +213,7 @@ if (is_woocommerce_active()) {
 				if(get_option('wc_ie_create_invoice')==1) {
 					foreach($order->get_items() as $item) {
 						$debug = print_r($item, true);
-						error_log("Carrinho = ".$debug);
+						//error_log("Cart = ".$debug);
 						
 						$items[] = array(
 								'name'			=> $item['name'],
