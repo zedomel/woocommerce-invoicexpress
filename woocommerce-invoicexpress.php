@@ -162,7 +162,7 @@ if (is_woocommerce_active()) {
 			
 			InvoiceXpressRequest::init($this->subdomain, $this->token);
 		
-			$order = new woocommerce_order($order_id);
+			$order = new WC_Order($order_id);
 		
 			$client_id = get_user_meta($order->user_id, 'wc_ie_client_id', true);
 			$client_name = $order->billing_first_name." ".$order->billing_last_name;
@@ -225,16 +225,6 @@ if (is_woocommerce_active()) {
 										'name'	=> 'IVA23'
 								)
 						);
-						$items[] = array(
-								'name'			=> 'Manuseamento e Transporte',
-								'description'	=> 'Manuseamento e Transporte',
-								'unit_price'	=> $order->get_shipping(),
-								'quantity'		=> 1,
-								'unit'			=> 'unit',
-								'tax'			=> array(
-										'name'	=> 'IVA23'
-								)
-						);
 					}	
 					
 					
@@ -285,7 +275,7 @@ if (is_woocommerce_active()) {
 											'email' => $order->billing_email,
 											'save' => 1
 											),
-									'subject' => 'PopyBox Factura de Pagamento',
+									'subject' => 'Factura de Pagamento',
 									'body' => 'Por favor encontre a sua factura em anexo. Pode guardar este documento como prova do seu pagamento. Obrigado.'									
 									)
 							);
@@ -307,7 +297,7 @@ if (is_woocommerce_active()) {
 		
 		function payment($order_id) {
 			InvoiceXpressRequest::init($this->subdomain, $this->token);
-			$order = new woocommerce_order ($order_id);
+			$order = new WC_Order($order_id);
 		
 			$invoice_id = get_post_meta($order_id,'wc_ie_inv_num',true);
 		
