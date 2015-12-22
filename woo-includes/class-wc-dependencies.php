@@ -8,7 +8,7 @@
 		
 		private static $active_plugins;
 		
-		function init() {
+		static function init() {
 			
 			self::$active_plugins = (array) get_option( 'active_plugins', array() );
 			
@@ -17,7 +17,7 @@
 			
 		}
 		
-		function woocommerce_active_check() {
+		static function woocommerce_active_check() {
 			
 			if ( ! self::$active_plugins ) self::init();
 			

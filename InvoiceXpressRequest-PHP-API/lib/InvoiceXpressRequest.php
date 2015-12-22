@@ -153,7 +153,7 @@ class InvoiceXpressRequest {
 	
 		$post_data = $this->getGeneratedXML();
 		$p = print_r($post_data, true);
-		error_log("post = ".$p);
+		//error_log("post = ".$p);
 		
 		$url = str_replace('{{ DOMAIN }}', self::$_domain, $this->_api_url);
 		
@@ -161,24 +161,38 @@ class InvoiceXpressRequest {
 		
 		$ch = curl_init();    // initialize curl handle
 		
-		if ($class[1] == "change-state" || $class[1] == "email-invoice")
-			$url = str_replace('{{ CLASS }}', "invoice/".$id."/".$class[1], $url);
-		elseif ($class[0] == "clients" && $class[1] == "get") {
+		if ($class[1] == "change-state" || $class[1] == "email-invoice") {
+			$url = str_replace( '{{ CLASS }}', "invoice/" . $id . "/" . $class[1], $url );
+		} elseif ($class[0] == "clients" && $class[1] == "find-by-code") {
+			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+			$url = str_replace('{{ CLASS }}', "clients/find-by-code", $url);
+		} elseif ($class[0] == "clients" && $class[1] == "update") {
+			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
+			$url = str_replace('{{ CLASS }}', "clients/".$id, $url);
+		} elseif ($class[0] == "clients" && $class[1] == "get") {
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
 			$url = str_replace('{{ CLASS }}', "clients/".$id, $url);
 		} elseif ($class[0] == "simplified_invoices" && $class[1] == "get") {
 			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
 			$url = str_replace('{{ CLASS }}', "simplified_invoices/".$id, $url);
+		} elseif ($class[0] == "sequences" && $class[1] == "get") {
+			curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'GET');
+			$url = str_replace('{{ CLASS }}', "sequences", $url);
 		} else {
 			$url = str_replace('{{ CLASS }}', $class[0], $url);
 			curl_setopt($ch, CURLOPT_POST, 1);
-			error_log("POST Request = true");
+			//error_log("POST Request = true");
 		}
 
 		$url .= "?api_key=".self::$_token;
-		
-	
-		error_log("URL = ".$url);
+
+		if ($class[0] == "clients" && $class[1] == "find-by-code") {
+			$url .= "&client_code=".$id;
+		}
+
+
+		//error_log("URL = ".$url);
+
 		curl_setopt($ch, CURLOPT_URL, $url); // set url to post to
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1); // return into a variable
 		curl_setopt($ch, CURLOPT_TIMEOUT, 40); // times out after 40s
@@ -205,17 +219,17 @@ class InvoiceXpressRequest {
 		// a user_meta wc_ie_client_id defined that not exists in InvoiceXpress
 		if ($result && $result != " ") {
 			$res = print_r($result, true);
-			error_log("result = {".$res."}");
+			//error_log("result = {".$res."}");
 			
 			$response = json_decode(json_encode(simplexml_load_string($result)), true);
-			$r = print_r($response, true);
-			error_log("response = ".$r);	
+			//$r = print_r($response, true);
+			//error_log("response = ".$r);
 		
 			$this->_response = $response;
 		}
 		
 		$this->_success = (($http_status == '201 Created') || ($http_status == '200 OK'));
-		error_log("http status = ".$http_status);
+		//error_log("http status = ".$http_status);
 		
 		if(isset($response['error']))
 		{
