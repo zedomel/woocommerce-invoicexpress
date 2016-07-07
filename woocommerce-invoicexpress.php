@@ -3,7 +3,7 @@
  Plugin Name: WooCommerce InvoiceXpress (Community)
 Plugin URI: http://woothemes.com/woocommerce
 Description:  Allows you to invoice your clients using InvoiceXpress
-Version: 0.11
+Version: 0.12
 Author: WidgiLabs
 Author URI: http://woocommerce-invoicexpress.com
 License: GPLv2
@@ -286,6 +286,11 @@ if (wc_ie_is_woocommerce_active()) {
 
 			$order = new WC_Order($order_id);
 
+			if ( ! $order->get_total() ) {
+				$order->add_order_note(__('Warning: Order total is zero, invoice not created!','wc_invoicexpress'));
+				return;
+			}
+
 			$client_name = $order->billing_first_name." ".$order->billing_last_name;
 
 			$country = wc_ie_get_correct_country( $order->billing_country );
@@ -304,8 +309,8 @@ if (wc_ie_is_woocommerce_active()) {
 			}
 
 			$invoice_name = $client_name;
-			if ( $order->billing_company_name ){
-				$invoice_name = $order->billing_company_name;
+			if ( $order->billing_company ){
+				$invoice_name = $order->billing_company;
 			}
 
 			//date from form
@@ -361,18 +366,13 @@ if (wc_ie_is_woocommerce_active()) {
 
 				$prod = get_product($pid);
 
-				$original_price = floatval( $item['line_subtotal'] );
-				$discount_price = floatval( $item['line_total'] );
-
-				$discount_value = floatval( ( ( $original_price - $discount_price ) / $original_price ) * 100 );
-				$discount_value = number_format( $discount_value, 2 );
+				$final_price = floatval( $item['line_total'] );
 
 				$items[] = array(
 						'name'			=> "#".$pid,
 						'description'	=> $item['qty']. "x ".get_the_title($pid),
-						'unit_price'	=> $discount_price, // subtract tax 23%
+						'unit_price'	=> $final_price, 
 						'quantity'		=> 1,
-						'discount'		=> $discount_value,
 						'unit'			=> 'unit',
 						'tax'			=> array(
 							'name'	=> $iva_name
@@ -387,18 +387,13 @@ if (wc_ie_is_woocommerce_active()) {
 
 				$fee_name = $item['name'];
 
-				$original_price = floatval( $item['line_subtotal'] );
-				$discount_price = floatval( $item['line_total'] );
-
-				$discount_value = floatval( ( ( $original_price - $discount_price ) / $original_price ) * 100 );
-				$discount_value = number_format( $discount_value, 2 );
+				$final_price = floatval( $item['line_total'] );
 
 				$items[] = array(
 						'name'			=> $fee_name,
 						'description'	=> $fee_name,
-						'unit_price'	=> $discount_price, // subtract tax 23%
+						'unit_price'	=> $final_price, 
 						'quantity'		=> 1,
-						'discount'		=> $discount_value,
 						'unit'			=> 'unit',
 						'tax'			=> array(
 							'name'	=> $iva_name

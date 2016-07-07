@@ -28,6 +28,11 @@ The InvoiceXpress Extension for WooCommerce allows you to invoice your clients v
 
 == Changelog ==
 
+= 0.12 =
+* Fix discount calculation
+* Fix company name field
+* Skip invoice creation if order total is zero
+
 = 0.11 =
 * Refactor the plugin
 
