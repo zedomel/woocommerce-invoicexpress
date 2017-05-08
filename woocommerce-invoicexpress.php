@@ -71,7 +71,7 @@ if (wc_ie_is_woocommerce_active()) {
 
 		function do_my_action($order) {
 			// Do something here with the WooCommerce $order object
-			$this->process($order->id);
+			$this->process($order->get_id());
 		
 		}
 
@@ -291,13 +291,13 @@ if (wc_ie_is_woocommerce_active()) {
 				return;
 			}
 
-			$client_name = $order->billing_first_name." ".$order->billing_last_name;
+			$client_name = $order->get_billing_first_name()." ".$order->get_billing_last_name();
 
-			$country = wc_ie_get_correct_country( $order->billing_country );
+			$country = wc_ie_get_correct_country( $order->get_billing_country() );
 
 			$vat='';
 			$vat_text = '';
-			$client_email = $order->billing_email;
+			$client_email = $order->get_billing_email();
 
 			if(isset($order->billing_nif)){
 				$vat = $order->billing_nif;
@@ -309,8 +309,8 @@ if (wc_ie_is_woocommerce_active()) {
 			}
 
 			$invoice_name = $client_name;
-			if ( $order->billing_company ){
-				$invoice_name = $order->billing_company;
+			if ( $order->get_billing_company() ){
+				$invoice_name = $order->get_billing_company();
 			}
 
 			//date from form
@@ -318,9 +318,9 @@ if (wc_ie_is_woocommerce_active()) {
 				'name'         => $invoice_name,
 				'code'         => $client_email,
 				'email'        => $client_email,
-				'phone'        => $order->billing_phone,
-				'address'      => $order->billing_address_1 . "\n" . $order->billing_address_2 . "\n",
-				'postal_code'  => $order->billing_postcode . " - " . $order->billing_city,
+				'phone'        => $order->get_billing_phone(),
+				'address'      => $order->get_billing_address_1() . "\n" . $order->get_billing_address_2() . "\n",
+				'postal_code'  => $order->get_billing_postcode() . " - " . $order->get_billing_city(),
 				'country'      => $country,
 				'fiscal_id'    => $vat
 			);
@@ -341,9 +341,9 @@ if (wc_ie_is_woocommerce_active()) {
 						'name'         => $invoice_name,
 						'code'         => $client_email,
 						'email'        => $client_email,
-						'phone'        => $order->billing_phone,
-						'address'      => $order->billing_address_1 . "\n" . $order->billing_address_2 . "\n",
-						'postal_code'  => $order->billing_postcode . " - " . $order->billing_city,
+						'phone'        => $order->get_billing_phone(),
+						'address'      => $order->get_billing_address_1() . "\n" . $order->get_billing_address_2() . "\n",
+						'postal_code'  => $order->get_billing_postcode() . " - " . $order->get_billing_city(),
 						'country'      => $country,
 						'fiscal_id'    => $vat,
 						'send_options' => $send_options
@@ -362,7 +362,7 @@ if (wc_ie_is_woocommerce_active()) {
 
 			foreach($order->get_items() as $item) {
 
-				$pid = $item['item_meta']['_product_id'][0];
+				$pid = $item['item_meta']['product_id'][0];
 
 				$prod = get_product($pid);
 
@@ -404,7 +404,7 @@ if (wc_ie_is_woocommerce_active()) {
 			/*
 			 SHIPPING
 			 */
-			$shipping_unit_price =  $order->get_total_shipping();
+			$shipping_unit_price =  $order->get_shipping_total();
 			$shipping_tax_name   = "IVA23";
 			$shipping_tax_status = $this->wc_ie_get_order_shipping_tax_status( $order ) ; 
 
@@ -430,8 +430,8 @@ if (wc_ie_is_woocommerce_active()) {
 			if(get_option('wc_ie_create_simplified_invoice')==1) {
 				$data = array(
 						'simplified_invoice' => array(
-								'date'	=> $order->completed_date,
-								'due_date' => $order->completed_date,
+								'date'	=> $order->get_date_completed(),
+								'due_date' => $order->get_date_completed(),
 								'client' => $client_data,
 								'reference' => $order_id,
 								'items'		=> array(
@@ -451,8 +451,8 @@ if (wc_ie_is_woocommerce_active()) {
 				 */
 				$data = array(
 						'invoice' => array(
-								'date'	=> $order->completed_date,
-								'due_date' => $order->completed_date,
+								'date'	=> $order->get_date_completed(),
+								'due_date' => $order->get_date_completed(),
 								'client' => $client_data,
 								'reference' => $order_id,
 								'items'		=> array(
@@ -526,7 +526,7 @@ if (wc_ie_is_woocommerce_active()) {
 				$data = array(
 						'message' => array(
 								'client' => array(
-										'email' => $order->billing_email,
+										'email' => $order->get_billing_email(),
 										'save' => 1
 										),
 								'subject' => $subject,
@@ -619,8 +619,8 @@ if (wc_ie_is_woocommerce_active()) {
 		  		}
 			} else {
 				//New WooCommerce versions
-				if ($order->billing_country=='PT') {
-					$order_custom_fields=get_post_custom($order->ID);
+				if ($order->get_billing_country()=='PT') {
+					$order_custom_fields=get_post_custom($order->get_id());
 					echo "<p><strong>".__('NIF / NIPC', 'wc_invoicexpress').":</strong> " . $order_custom_fields['_billing_nif'][0] . "</p>";
 				}
 			}
